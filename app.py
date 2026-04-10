@@ -59,9 +59,12 @@ if os.path.exists(file):
         st.stop()
 
 # ---------- Answers ----------
-answers = {}
-for q in questions:
-    answers[q] = st.radio(q + ": " + questions[q][0], questions[q][1], key=q)
+answers[q] = st.radio(
+    q + ": " + questions[q][0],
+    questions[q][1],
+    index=None,   # 👈 THIS IS THE FIX
+    key=q
+)
 
 # ---------- Submit ----------
 if st.button("Submit"):
