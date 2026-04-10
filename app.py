@@ -1,57 +1,85 @@
 import streamlit as st
 import pandas as pd
+import os
 
-st.title("📊 Quiz Dashboard System")
+st.title("🧠 AI Quiz Dashboard")
 
-# Correct Answers
-correct = {"Q1": "Delhi", "Q2": "8"}
+# ---------- Student ID ----------
+student_id = st.text_input("Enter Your ID")
 
-# Quiz Form
-name = st.text_input("Enter your name")
+# ---------- Questions ----------
+questions = {
+"Q1": ("Which of the following is a linear data structure?", ["Graph","Tree","Array","Hash Table"]),
+"Q2": ("Which SQL command is used to remove a table permanently?", ["DELETE","DROP","REMOVE","ERASE"]),
+"Q3": ("Which algorithm is commonly used for shortest path in graphs?", ["Kruskal’s","Dijkstra’s","Prim’s","Bellman-Ford"]),
+"Q4": ("Which of the following is a supervised learning algorithm?", ["K-Means","PCA","Linear Regression","Apriori"]),
+"Q5": ("Which activation function helps reduce vanishing gradient issues?", ["Sigmoid","Tanh","ReLU","Softmax"]),
+"Q6": ("Which metric is best for imbalanced classification problems?", ["Accuracy","Precision","Recall","F1-Score"]),
+"Q7": ("Which of the following is NOT a neural network type?", ["CNN","RNN","GAN","Decision Tree"]),
+"Q8": ("In machine learning, an ‘epoch’ refers to:", ["One batch update","One forward pass","One backward pass","One complete pass through dataset"]),
+"Q9": ("Which loss function is commonly used for binary classification?", ["Mean Squared Error","Cross-Entropy","Huber Loss","Hinge Loss"]),
+"Q10": ("Which algorithm is used for dimensionality reduction?", ["Naive Bayes","PCA","Random Forest","SVM"]),
+"Q11": ("Which concept is central to reinforcement learning?", ["Reward","Dropout","Overfitting","Gradient Descent"]),
+"Q12": ("Which technique prevents overfitting in neural networks?", ["Gradient Clipping","Dropout","Batch Normalization","Learning Rate Scheduling"]),
+"Q13": ("Which optimizer uses momentum and adaptive learning rates?", ["SGD","RMSProp","Adagrad","Adam"]),
+"Q14": ("Which of the following is an unsupervised learning algorithm?", ["Logistic Regression","Decision Tree","K-Means","Linear Regression"]),
+"Q15": ("Which metric is commonly used for regression tasks?", ["Precision","Recall","F1-Score","Mean Absolute Error"]),
+"Q16": ("What is Artificial Intelligence?", ["Human intelligence","Machine intelligence","Natural language","Programming language"]),
+"Q17": ("Which of the following is an example of AI?", ["Calculator","Washing machine","Chatbot","Keyboard"]),
+"Q18": ("Which AI field deals with understanding human language?", ["Computer Vision","NLP","Robotics","Data Mining"]),
+"Q19": ("Which AI technique is used in self-driving cars?", ["Machine Learning","Networking","Compiler Design","DBMS"]),
+"Q20": ("Which company developed ChatGPT?", ["Google","Microsoft","OpenAI","IBM"]),
+"Q21": ("Which of the following is a type of AI agent?", ["Simple Reflex Agent","Random Agent","Passive Agent","Static Agent"]),
+"Q22": ("What is the main goal of AI?", ["Replace humans","Solve complex problems","Store data","Design hardware"]),
+"Q23": ("Which language is widely used in AI?", ["C","Java","Python","HTML"]),
+"Q24": ("Which AI concept allows machines to learn from data?", ["Networking","Machine Learning","Compilation","Encryption"]),
+"Q25": ("Which of the following is a real-world AI application?", ["Email spam filter","Printer","Keyboard","Monitor"])
+}
 
-q1 = st.radio("Q1: Capital of India?", ["Delhi", "Mumbai", "Chennai", "Kolkata"])
-q2 = st.radio("Q2: 5 + 3 = ?", ["6", "7", "8", "9"])
+correct = {
+"Q1":"Array","Q2":"DROP","Q3":"Dijkstra’s","Q4":"Linear Regression","Q5":"ReLU",
+"Q6":"F1-Score","Q7":"Decision Tree","Q8":"One complete pass through dataset","Q9":"Cross-Entropy","Q10":"PCA",
+"Q11":"Reward","Q12":"Dropout","Q13":"Adam","Q14":"K-Means","Q15":"Mean Absolute Error",
+"Q16":"Machine intelligence","Q17":"Chatbot","Q18":"NLP","Q19":"Machine Learning","Q20":"OpenAI",
+"Q21":"Simple Reflex Agent","Q22":"Solve complex problems","Q23":"Python","Q24":"Machine Learning","Q25":"Email spam filter"
+}
 
+# ---------- Answers ----------
+answers = {}
+for q in questions:
+    answers[q] = st.radio(q + ": " + questions[q][0], questions[q][1], key=q)
+
+# ---------- Submit ----------
 if st.button("Submit"):
     score = 0
-    
-    if q1 == correct["Q1"]:
-        score += 1
-    if q2 == correct["Q2"]:
-        score += 1
+    for q in correct:
+        if answers[q] == correct[q]:
+            score += 1
 
-    data = {"Name": name, "Q1": q1, "Q2": q2, "Score": score}
-    df = pd.DataFrame([data])
+    st.success(f"Your Score: {score}/25")
 
-    try:
-        old = pd.read_csv("responses.csv")
-        df = pd.concat([old, df], ignore_index=True)
-    except:
-        pass
+    file = "data.csv"
 
-    df.to_csv("responses.csv", index=False)
-    st.success(f"Submitted! Your Score: {score}")
+    new_data = [student_id] + list(answers.values()) + [score]
 
-# Dashboard
-st.header("📊 Dashboard")
+    columns = ["ID"] + list(questions.keys()) + ["Score"]
 
-try:
-    df = pd.read_csv("responses.csv")
+    if os.path.exists(file):
+        df = pd.read_csv(file)
+    else:
+        df = pd.DataFrame(columns=columns)
 
+    df.loc[len(df)] = new_data
+    df.to_csv(file, index=False)
+
+# ---------- Dashboard ----------
+if os.path.exists("data.csv"):
+    st.subheader("📊 Dashboard")
+
+    df = pd.read_csv("data.csv")
     df = df.sort_values(by="Score", ascending=False)
-    df["Rank"] = range(1, len(df) + 1)
+    df["Rank"] = range(1, len(df)+1)
 
-    st.subheader("🏆 Leaderboard")
-    st.write(df[["Rank", "Name", "Score"]])
+    st.write(df[["Rank","ID","Score"]])
 
-    topper = df.iloc[0]
-    st.success(f"🥇 Topper: {topper['Name']} (Score: {topper['Score']})")
-
-    st.subheader("Q1 Analysis")
-    st.bar_chart(df["Q1"].value_counts())
-
-    st.subheader("Q2 Analysis")
-    st.bar_chart(df["Q2"].value_counts())
-
-except:
-    st.warning("No data yet")
+    st.bar_chart(df.set_index("ID")["Score"])
