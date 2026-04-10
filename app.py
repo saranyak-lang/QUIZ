@@ -2,10 +2,16 @@ import streamlit as st
 import pandas as pd
 import os
 
-st.title("🧠 AI Quiz Dashboard")
+st.set_page_config(page_title="AI Quiz", page_icon="🧠")
+
+st.title("🧠 AI Quiz")
 
 # ---------- Student ID ----------
 student_id = st.text_input("Enter Your ID")
+
+if student_id == "":
+    st.warning("Please enter ID before attempting")
+    st.stop()
 
 # ---------- Questions ----------
 questions = {
@@ -44,6 +50,14 @@ correct = {
 "Q21":"Simple Reflex Agent","Q22":"Solve complex problems","Q23":"Python","Q24":"Machine Learning","Q25":"Email spam filter"
 }
 
+# ---------- Prevent duplicate ----------
+file = "data.csv"
+if os.path.exists(file):
+    df = pd.read_csv(file)
+    if student_id in df["ID"].values:
+        st.error("You have already submitted!")
+        st.stop()
+
 # ---------- Answers ----------
 answers = {}
 for q in questions:
@@ -58,10 +72,7 @@ if st.button("Submit"):
 
     st.success(f"Your Score: {score}/25")
 
-    file = "data.csv"
-
     new_data = [student_id] + list(answers.values()) + [score]
-
     columns = ["ID"] + list(questions.keys()) + ["Score"]
 
     if os.path.exists(file):
@@ -73,13 +84,12 @@ if st.button("Submit"):
     df.to_csv(file, index=False)
 
 # ---------- Dashboard ----------
-if os.path.exists("data.csv"):
+if os.path.exists(file):
     st.subheader("📊 Dashboard")
 
-    df = pd.read_csv("data.csv")
+    df = pd.read_csv(file)
     df = df.sort_values(by="Score", ascending=False)
     df["Rank"] = range(1, len(df)+1)
 
     st.write(df[["Rank","ID","Score"]])
-
     st.bar_chart(df.set_index("ID")["Score"])
