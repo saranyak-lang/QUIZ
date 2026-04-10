@@ -62,29 +62,23 @@ if os.path.exists(file):
 answers[q] = st.radio(
     q + ": " + questions[q][0],
     questions[q][1],
-    index=None,   # 👈 THIS IS THE FIX
+    index=None,
     key=q
 )
 
 # ---------- Submit ----------
 if st.button("Submit"):
+
+    if None in answers.values():
+        st.warning("Please answer all questions before submitting!")
+        st.stop()
+
     score = 0
     for q in correct:
         if answers[q] == correct[q]:
             score += 1
 
     st.success(f"Your Score: {score}/25")
-
-    new_data = [student_id] + list(answers.values()) + [score]
-    columns = ["ID"] + list(questions.keys()) + ["Score"]
-
-    if os.path.exists(file):
-        df = pd.read_csv(file)
-    else:
-        df = pd.DataFrame(columns=columns)
-
-    df.loc[len(df)] = new_data
-    df.to_csv(file, index=False)
 
 # ---------- Dashboard ----------
 if os.path.exists(file):
